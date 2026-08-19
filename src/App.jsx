@@ -5,11 +5,13 @@ import ShimmerButton from "./components/ShimmerButton";
 import LiveCaptionTicker from "./components/LiveCaptionTicker";
 import TranscriptViewer from "./components/TranscriptViewer";
 
-// URL de tu Cloudflare Worker desplegado. Puedes sobreescribirla con la
-// variable de entorno VITE_WORKER_URL en un .env o en GitHub Actions.
+// URL del Cloudflare Worker desplegado. En produccion GitHub Actions
+// inyecta esta URL como secreto VITE_WORKER_URL; en local puedes definirla
+// en un .env. El fallback aqui es solo para que el build no rompa si el
+// secreto no esta configurado todavia.
 const WORKER_URL =
   import.meta.env.VITE_WORKER_URL ||
-  "https://yt-transcript-worker.TU-SUBDOMINIO.workers.dev";
+  "https://yt-transcript-worker.questi0ns-x.workers.dev";
 
 export default function App() {
   const [url, setUrl] = useState("");
