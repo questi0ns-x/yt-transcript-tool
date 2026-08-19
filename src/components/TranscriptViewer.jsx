@@ -135,10 +135,35 @@ export default function TranscriptViewer({ data }) {
     <div className="relative w-full max-w-3xl rounded-2xl border border-[#232330] bg-[#13131a]">
       <BorderBeam />
 
-      <div className="flex flex-col gap-1 border-b border-[#232330] p-5">
+      <div className="flex flex-col gap-3 border-b border-[#232330] p-5">
         <h3 className="font-display text-lg text-[#e4e4ea]">
           {data.title || "Transcripcion"}
         </h3>
+
+        {data.thumbnails && data.thumbnails.length > 0 && (
+          <a
+            href={`https://www.youtube.com/watch?v=${data.videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block w-fit overflow-hidden rounded-lg border border-[#232330] transition-colors hover:border-[#f5a623]"
+            title="Abrir en YouTube"
+          >
+            <img
+              // YouTube devuelve varias resoluciones ordenadas de menor a
+              // mayor; la ultima suele ser maxresdefault (1280x720). Si no
+              // existe, la inmediatamente anterior (hqdefault 480x360) es
+              // siempre fiable. El `??` cubre el caso de array vacio.
+              src={
+                data.thumbnails[data.thumbnails.length - 1] ||
+                data.thumbnails[0]
+              }
+              alt={`Miniatura de ${data.title || data.videoId}`}
+              loading="lazy"
+              className="block h-auto max-h-64 w-full max-w-md object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            />
+          </a>
+        )}
+
         <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-[#8a8a99]">
           <span>{data.videoId}</span>
           <span className="text-[#f5a623]">
