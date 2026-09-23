@@ -1,11 +1,14 @@
 import { ProviderError, ProviderErrorCodes } from "./errors";
 
-// Fabrica de providers para plataformas cuya deteccion de URL ya esta
-// lista, pero cuya extraccion de transcript (via audio + Speech-to-Text)
-// todavia no esta implementada porque depende del backend/Worker, que
-// vive en otro repositorio. Mantiene la UI y el registry agnosticos de
-// plataforma: cuando el Worker soporte la plataforma, basta con
-// sustituir este provider por uno real con la misma interfaz.
+const WORKER_URL =
+  import.meta.env.VITE_WORKER_URL ||
+  "https://yt-transcript-worker.questi0ns-x.workers.dev";
+
+// Fabrica de providers para plataformas sin transcript real (no existe
+// via oficial para descargar audio/video de terceros sin autorizacion
+// del dueno del contenido). Pueden, eso si, mostrar metadata publica
+// basica (titulo, autor, thumbnail) via el oEmbed oficial de cada
+// plataforma, que el Worker expone en /metadata.
 export function createUnavailableProvider({ id, label, hosts, pathIsVideo }) {
   const hostSet = new Set(hosts);
 
@@ -29,8 +32,21 @@ export function createUnavailableProvider({ id, label, hosts, pathIsVideo }) {
     async getTranscript() {
       throw new ProviderError(
         ProviderErrorCodes.PLATFORM_NOT_SUPPORTED,
-        `${label} todavia no esta soportado. Estamos trabajando en ello.`
+        `${label} todavia no tiene transcript disponible: no existe una via oficial para descargar audio de video ajeno sin autorizacion del creador.`
       );
+    },
+
+    async getMetadata(url, { signal } = {}) {
+      try {
+        const res = await fetch(
+          `${WORKER_URL}/metadata?platform=${id}&url=${encodeURIComponent(url)}`,
+          { signal }
+        );
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
     },
   };
 }

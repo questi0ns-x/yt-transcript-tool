@@ -20,6 +20,7 @@ export default function App() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+  const [metadata, setMetadata] = useState(null);
   const abortRef = useRef(null);
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setData(null);
+    setMetadata(null);
 
     try {
       const video = provider.parseUrl(trimmedUrl);
@@ -68,6 +70,12 @@ export default function App() {
         setError("No se pudo conectar con el servicio. Comprueba tu conexion.");
       } else {
         setError(err.message || "Ha ocurrido un error inesperado.");
+        if (err.code === "PLATFORM_NOT_SUPPORTED" && provider.getMetadata) {
+          const meta = await provider.getMetadata(trimmedUrl, {
+            signal: controller.signal,
+          });
+          if (meta) setMetadata(meta);
+        }
       }
     } finally {
       clearTimeout(timeoutId);
@@ -141,6 +149,26 @@ export default function App() {
             className="mt-6 w-full max-w-xl rounded-lg border border-[#5a1e1e] bg-[#1a0d0d] px-4 py-3 text-sm text-[#e08585]"
           >
             {error}
+          </div>
+        )}
+
+        {metadata && (
+          <div className="mt-4 flex w-full max-w-xl items-center gap-4 rounded-lg border border-[#232330] bg-[#13131a] p-4">
+            {metadata.thumbnailUrl && (
+              <img
+                src={metadata.thumbnailUrl}
+                alt={metadata.title || "Miniatura"}
+                className="h-16 w-16 shrink-0 rounded-md object-cover"
+              />
+            )}
+            <div className="min-w-0">
+              {metadata.title && (
+                <p className="truncate text-sm text-[#e4e4ea]">{metadata.title}</p>
+              )}
+              {metadata.author && (
+                <p className="truncate text-xs text-[#8a8a99]">{metadata.author}</p>
+              )}
+            </div>
           </div>
         )}
 
