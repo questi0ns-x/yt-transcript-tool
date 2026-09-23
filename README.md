@@ -3,8 +3,8 @@
 Interfaz web para extraer la transcripcion completa de cualquier video de
 YouTube, sin anuncios ni recaptchas.
 
-El backend (proxy serverless en Cloudflare Workers que obtiene los
-subtitulos publicos de YouTube) vive en otro repositorio y se configura
+El backend (proxy serverless en Cloudflare Workers) vive en
+[`/worker`](worker/) dentro de este mismo repositorio y se configura
 mediante la variable de entorno `VITE_WORKER_URL`.
 
 ## Configurar el secreto en GitHub
@@ -51,7 +51,14 @@ npm run dev
 - Solo se obtienen subtitulos publicos existentes (manuales o
   autogenerados). No hay transcripcion por voz (Speech-to-Text): si el
   video no tiene subtitulos publicos, no se puede extraer texto.
-- TikTok e Instagram no estan soportados todavia.
+- **Extraccion de YouTube temporalmente no disponible:** YouTube esta
+  bloqueando el metodo publico de lectura de subtitulos. Ver
+  [`worker/README.md`](worker/README.md) para el detalle tecnico y las
+  alternativas evaluadas (y descartadas por requerir bypass de
+  deteccion de bots).
+- TikTok e Instagram no estan soportados todavia (sin transcript). El
+  Worker puede devolver metadata publica basica via oEmbed si se le
+  pide explicitamente en `/metadata`.
 
 ## Privacidad
 

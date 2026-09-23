@@ -30,3 +30,6 @@ Thumbs.db
 # vite cache
 .vite
 .claude/
+
+# cloudflare workers
+.wrangler/

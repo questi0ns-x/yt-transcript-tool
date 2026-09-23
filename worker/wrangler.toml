@@ -1,0 +1,15 @@
+name = "yt-transcript-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[vars]
+ALLOWED_ORIGINS = "https://questi0ns-x.github.io,http://localhost:5173"
+
+# Namespace opcional para rate limiting. Sin este binding el Worker
+# sigue funcionando, simplemente sin limitar requests por IP. Crealo
+# con `wrangler kv namespace create RATE_LIMIT_KV` (requiere permiso
+# "Workers KV Storage:Edit" en el API token) y descomenta:
+#
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT_KV"
+# id = "TU_NAMESPACE_ID"
