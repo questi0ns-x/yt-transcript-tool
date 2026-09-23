@@ -9,6 +9,7 @@ import {
   Type,
 } from "lucide-react";
 import BorderBeam from "./BorderBeam";
+import { youtubeWatchUrl } from "../utils/youtube";
 
 function formatTimestamp(seconds) {
   const s = Math.floor(seconds);
@@ -309,9 +310,15 @@ export default function TranscriptViewer({ data }) {
                 key={i}
                 className="group flex items-start gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-[#1a1a23]"
               >
-                <span className="shrink-0 font-mono text-xs text-[#f5a623] pt-0.5">
+                <a
+                  href={youtubeWatchUrl(data.videoId, seg.start)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abrir el video en este momento"
+                  className="shrink-0 font-mono text-xs text-[#f5a623] pt-0.5 hover:underline"
+                >
                   {formatTimestamp(seg.start)}
-                </span>
+                </a>
                 <span className="flex-1 text-[#c8c8d0]">{seg.text}</span>
                 <button
                   onClick={() => copyLine(seg, i)}
