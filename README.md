@@ -42,3 +42,21 @@ VITE_WORKER_URL=https://yt-transcript-worker.tu-subdominio.workers.dev
 ```bash
 npm run dev
 ```
+
+## Limitaciones actuales
+
+- Solo YouTube esta soportado. Se aceptan enlaces `youtube.com/watch`,
+  `youtu.be`, `youtube.com/shorts` y `youtube.com/embed`; cualquier otro
+  dominio se rechaza antes de llamar al backend.
+- Solo se obtienen subtitulos publicos existentes (manuales o
+  autogenerados). No hay transcripcion por voz (Speech-to-Text): si el
+  video no tiene subtitulos publicos, no se puede extraer texto.
+- TikTok e Instagram no estan soportados todavia.
+
+## Privacidad
+
+- Esta app (frontend) no almacena la URL ni la transcripcion en ningun
+  servidor propio; todo el procesamiento visible ocurre en tu navegador.
+- La URL se envia al Worker de Cloudflare (repositorio separado) para
+  obtener los subtitulos publicos del video. Consulta ese repositorio
+  para conocer que datos procesa y si los cachea.
