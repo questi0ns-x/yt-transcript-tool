@@ -46,7 +46,7 @@ async function handleTranscript(request, env, ctx, cors) {
   }
 
   try {
-    const data = await getYoutubeTranscript(videoId, lang);
+    const data = await getYoutubeTranscript(videoId, lang, env);
     await setCached(videoId, lang, data, ctx);
     return jsonResponse(data, 200, { ...cors, "X-Cache": "MISS" });
   } catch (err) {

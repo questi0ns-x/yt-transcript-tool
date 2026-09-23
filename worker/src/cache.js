@@ -1,13 +1,13 @@
-// Cache de transcripts ya resueltos, para no volver a golpear YouTube
-// por el mismo video+idioma. Usa la Cache API nativa de Cloudflare
-// (edge cache), sin necesidad de KV adicional.
+// Cache de transcripts ya resueltos. Usa la Cache API nativa de Cloudflare.
 
-const CACHE_VERSION = "v1";
-const TTL_SECONDS = 60 * 60 * 24; // 24h: los subtitulos de un video publicado no cambian a menudo.
+const CACHE_VERSION = "v2";
+const TTL_SECONDS = 60 * 60 * 24;
 
 function cacheKeyFor(videoId, lang) {
   return new Request(
-    `https://cache.internal/transcript/${CACHE_VERSION}/${videoId}/${lang || "auto"}`
+    `https://cache.internal/transcript/${CACHE_VERSION}/${videoId}/${
+      lang || "auto"
+    }`
   );
 }
 

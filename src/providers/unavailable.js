@@ -1,14 +1,9 @@
 import { ProviderError, ProviderErrorCodes } from "./errors";
 
-const WORKER_URL =
-  import.meta.env.VITE_WORKER_URL ||
-  "https://yt-transcript-worker.questi0ns-x.workers.dev";
+// Forzado a local para pruebas. En produccion se cambiara al Worker
+// desplegado.
+const WORKER_URL = "http://localhost:8787";
 
-// Fabrica de providers para plataformas sin transcript real (no existe
-// via oficial para descargar audio/video de terceros sin autorizacion
-// del dueno del contenido). Pueden, eso si, mostrar metadata publica
-// basica (titulo, autor, thumbnail) via el oEmbed oficial de cada
-// plataforma, que el Worker expone en /metadata.
 export function createUnavailableProvider({ id, label, hosts, pathIsVideo }) {
   const hostSet = new Set(hosts);
 

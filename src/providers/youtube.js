@@ -1,16 +1,21 @@
 import { extractYoutubeVideoId } from "../utils/youtube";
 import { ProviderError, ProviderErrorCodes } from "./errors";
 
-const WORKER_URL =
-  import.meta.env.VITE_WORKER_URL ||
-  "https://yt-transcript-worker.questi0ns-x.workers.dev";
+// Forzado a local para pruebas. En produccion, el .env o el default
+// apuntaran al Worker desplegado en Cloudflare.
+const WORKER_URL = "http://localhost:8787";
 
 function mapErrorMessage(status, serverMessage) {
-  if (status === 404) return "No se encontro ningun transcript disponible para este video.";
-  if (status === 403) return "Este video parece ser privado o no es accesible.";
-  if (status === 429) return "Has realizado demasiadas solicitudes. Intentalo mas tarde.";
-  if (status >= 500) return "El servicio no esta disponible ahora mismo. Intentalo mas tarde.";
-  return serverMessage || "No se pudo obtener la transcripcion.";
+  if (serverMessage) return serverMessage;
+  if (status === 404)
+    return "No se encontro ningun transcript disponible para este video.";
+  if (status === 403)
+    return "Este video parece ser privado o no es accesible.";
+  if (status === 429)
+    return "Has realizado demasiadas solicitudes. Intentalo mas tarde.";
+  if (status >= 500)
+    return "El servicio no esta disponible ahora mismo. Intentalo mas tarde.";
+  return "No se pudo obtener la transcripcion.";
 }
 
 export const youtubeProvider = {
@@ -23,7 +28,10 @@ export const youtubeProvider = {
   parseUrl(url) {
     const videoId = extractYoutubeVideoId(url);
     if (!videoId) {
-      throw new ProviderError(ProviderErrorCodes.INVALID_URL, "URL de YouTube no valida.");
+      throw new ProviderError(
+        ProviderErrorCodes.INVALID_URL,
+        "URL de YouTube no valida."
+      );
     }
     return { platform: "youtube", videoId, url };
   },
