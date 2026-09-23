@@ -99,7 +99,7 @@ export default function App() {
           llenos de anuncios ni verificaciones absurdas.
         </p>
 
-        <div className="mt-10">
+        <div className="mt-10 flex w-full max-w-xl justify-center">
           <LiveCaptionTicker />
         </div>
 

@@ -58,18 +58,15 @@ export default function LiveCaptionTicker() {
           desplace el formulario mientras el usuario pega la URL. */}
       <div className="flex h-[104px] flex-col justify-end gap-2 overflow-hidden">
         {visibleCompleted.map((line, i) => (
-          <div
-            key={i}
-            className="flex gap-3 overflow-hidden text-[#5a5a68]"
-          >
+          <div key={i} className="flex min-w-0 gap-3 text-[#5a5a68]">
             <span className="shrink-0 text-[#7a5416]">{line.t}</span>
-            <span className="truncate">{line.text}</span>
+            <span className="min-w-0 truncate">{line.text}</span>
           </div>
         ))}
         {activeLine && (
-          <div className="flex gap-3 overflow-hidden text-[#e4e4ea]">
+          <div className="flex min-w-0 gap-3 text-[#e4e4ea]">
             <span className="shrink-0 text-[#f5a623]">{activeLine.t}</span>
-            <span className="truncate">
+            <span className="min-w-0 truncate">
               {activeLine.text.slice(0, charIndex)}
               <span className="animate-pulse text-[#f5a623]">▍</span>
             </span>
