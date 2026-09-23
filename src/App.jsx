@@ -4,15 +4,7 @@ import TextGenerateEffect from "./components/TextGenerateEffect";
 import ShimmerButton from "./components/ShimmerButton";
 import LiveCaptionTicker from "./components/LiveCaptionTicker";
 import TranscriptViewer from "./components/TranscriptViewer";
-import { isValidYoutubeUrl } from "./utils/youtube";
-
-// URL del Cloudflare Worker desplegado. En produccion GitHub Actions
-// inyecta esta URL como secreto VITE_WORKER_URL; en local puedes definirla
-// en un .env. El fallback aqui es solo para que el build no rompa si el
-// secreto no esta configurado todavia.
-const WORKER_URL =
-  import.meta.env.VITE_WORKER_URL ||
-  "https://yt-transcript-worker.questi0ns-x.workers.dev";
+import { resolveProvider } from "./providers/registry";
 
 const REQUEST_TIMEOUT_MS = 25000;
 
@@ -21,14 +13,6 @@ const LOADING_STEPS = [
   "Obteniendo informacion del video...",
   "Buscando transcripcion...",
 ];
-
-function mapErrorMessage(status, serverMessage) {
-  if (status === 404) return "No se encontro ningun transcript disponible para este video.";
-  if (status === 403) return "Este video parece ser privado o no es accesible.";
-  if (status === 429) return "Has realizado demasiadas solicitudes. Intentalo mas tarde.";
-  if (status >= 500) return "El servicio no esta disponible ahora mismo. Intentalo mas tarde.";
-  return serverMessage || "No se pudo obtener la transcripcion.";
-}
 
 export default function App() {
   const [url, setUrl] = useState("");
@@ -54,9 +38,10 @@ export default function App() {
     const trimmedUrl = url.trim();
     if (!trimmedUrl || loading) return;
 
-    if (!isValidYoutubeUrl(trimmedUrl)) {
+    const provider = resolveProvider(trimmedUrl);
+    if (!provider) {
       setError(
-        "Esa URL no parece ser un enlace valido de YouTube (watch, youtu.be, shorts o embed)."
+        "Esa URL no parece pertenecer a una plataforma soportada (YouTube, TikTok o Instagram)."
       );
       return;
     }
@@ -71,23 +56,11 @@ export default function App() {
     setData(null);
 
     try {
-      const res = await fetch(
-        `${WORKER_URL}/transcript?url=${encodeURIComponent(trimmedUrl)}`,
-        { signal: controller.signal }
-      );
-
-      let json = null;
-      try {
-        json = await res.json();
-      } catch {
-        json = null;
-      }
-
-      if (!res.ok) {
-        throw new Error(mapErrorMessage(res.status, json?.error));
-      }
-
-      setData(json);
+      const video = provider.parseUrl(trimmedUrl);
+      const result = await provider.getTranscript(video, {
+        signal: controller.signal,
+      });
+      setData(result);
     } catch (err) {
       if (err.name === "AbortError") {
         setError("La solicitud tardo demasiado. Intentalo de nuevo.");
@@ -135,7 +108,7 @@ export default function App() {
           className="mt-10 flex w-full max-w-xl flex-col gap-3 sm:flex-row"
         >
           <label htmlFor="video-url" className="sr-only">
-            URL del video de YouTube
+            URL del video de YouTube, TikTok o Instagram
           </label>
           <input
             id="video-url"
