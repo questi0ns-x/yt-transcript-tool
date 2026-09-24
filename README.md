@@ -51,11 +51,9 @@ npm run dev
 - Solo se obtienen subtitulos publicos existentes (manuales o
   autogenerados). No hay transcripcion por voz (Speech-to-Text): si el
   video no tiene subtitulos publicos, no se puede extraer texto.
-- **Extraccion de YouTube temporalmente no disponible:** YouTube esta
-  bloqueando el metodo publico de lectura de subtitulos. Ver
-  [`worker/README.md`](worker/README.md) para el detalle tecnico y las
-  alternativas evaluadas (y descartadas por requerir bypass de
-  deteccion de bots).
+- YouTube puede bloquear ocasionalmente la IP saliente del Worker
+  (error `503`). Ver [`worker/README.md`](worker/README.md) para
+  como mitigarlo con un proxy de Webshare.
 - TikTok e Instagram no estan soportados todavia (sin transcript). El
   Worker puede devolver metadata publica basica via oEmbed si se le
   pide explicitamente en `/metadata`.

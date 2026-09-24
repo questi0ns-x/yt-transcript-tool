@@ -4,9 +4,6 @@
   "main": "src/main.py",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": ["python_workers"],
-  "vars": {
-    "ALLOWED_ORIGINS": "https://questi0ns-x.github.io,http://localhost:5173"
-  },
   "observability": {
     "enabled": true
   }

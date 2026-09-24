@@ -38,7 +38,7 @@ export const youtubeProvider = {
 
   async getTranscript(video, { signal } = {}) {
     const res = await fetch(
-      `${WORKER_URL}/transcript?url=${encodeURIComponent(video.url)}`,
+      `${WORKER_URL}/transcript?video_id=${encodeURIComponent(video.videoId)}`,
       { signal }
     );
 
