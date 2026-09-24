@@ -43,6 +43,22 @@ uv run pywrangler deploy
 El token necesita permiso "Workers Scripts: Edit" con "Account
 Resources" apuntando a tu cuenta.
 
+## Cache de transcripts (opcional, gratis)
+
+Si dos personas piden el mismo video, la segunda puede servirse desde
+cache en vez de volver a golpear YouTube (reduce cuantas veces se
+dispara un bloqueo). Usa un namespace de Cloudflare KV, gratis dentro
+del tier free (100k lecturas/dia, 1k escrituras/dia). Sin configurar,
+el Worker funciona igual, solo que sin cache.
+
+```bash
+npx wrangler kv namespace create TRANSCRIPT_CACHE
+```
+
+Copia el `id` que te devuelva y descomenta el binding `kv_namespaces`
+en `wrangler.jsonc` con ese id. TTL de cache: 6 horas
+(`CACHE_TTL_SECONDS` en `src/main.py`).
+
 ## Variables de entorno
 
 - `WEBSHARE_USERNAME` / `WEBSHARE_PASSWORD` (opcional): credenciales
