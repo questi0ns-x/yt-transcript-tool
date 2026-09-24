@@ -7,7 +7,7 @@ desde variables de entorno (Secret en Cloudflare).
 """
 
 from workers import asgi
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.proxies import WebshareProxyConfig
@@ -20,6 +20,7 @@ from youtube_transcript_api._errors import (
     IpBlocked,
 )
 import os
+import json
 import requests
 
 
@@ -79,6 +80,41 @@ def fetch_youtube_oembed(video_id: str):
         return {"title": None, "author": None, "thumbnail": None}
 
 
+CACHE_TTL_SECONDS = 6 * 60 * 60  # 6 horas
+
+
+def cache_key(video_id: str, lang: str | None) -> str:
+    return f"transcript:{video_id}:{lang or 'auto'}"
+
+
+async def get_cached_transcript(env, video_id: str, lang: str | None):
+    """Lee del KV TRANSCRIPT_CACHE si esta configurado. Sin el binding
+    (namespace no creado/no enlazado), el Worker sigue funcionando
+    igual pero sin cache."""
+    kv = getattr(env, "TRANSCRIPT_CACHE", None)
+    if kv is None:
+        return None
+    try:
+        raw = await kv.get(cache_key(video_id, lang))
+        return json.loads(raw) if raw else None
+    except Exception:
+        return None
+
+
+async def set_cached_transcript(env, video_id: str, lang: str | None, data: dict):
+    kv = getattr(env, "TRANSCRIPT_CACHE", None)
+    if kv is None:
+        return
+    try:
+        await kv.put(
+            cache_key(video_id, lang),
+            json.dumps(data),
+            expirationTtl=CACHE_TTL_SECONDS,
+        )
+    except Exception:
+        pass
+
+
 def build_thumbnails(video_id: str, thumbnail_url):
     """Miniaturas ordenadas de mejor a peor."""
     candidates = []
@@ -134,9 +170,16 @@ async def metadata(url: str = Query(...), platform: str = Query(...)):
 
 @app.get("/transcript")
 async def transcript(
+    request: Request,
     video_id: str = Query(..., min_length=11, max_length=11),
     lang: str = Query(None),
 ):
+    env = request.scope.get("env")
+
+    cached = await get_cached_transcript(env, video_id, lang)
+    if cached:
+        return cached
+
     try:
         proxy_config = get_proxy_config()
         api = YouTubeTranscriptApi(proxy_config=proxy_config)
@@ -185,7 +228,7 @@ async def transcript(
         meta = fetch_youtube_oembed(video_id)
         thumbnails = build_thumbnails(video_id, meta["thumbnail"])
 
-        return {
+        result = {
             "platform": "youtube",
             "videoId": video_id,
             "title": meta["title"],
@@ -199,6 +242,8 @@ async def transcript(
             "transcript": segments,
             "fullText": full_text,
         }
+        await set_cached_transcript(env, video_id, lang, result)
+        return result
 
     except TranscriptsDisabled:
         raise HTTPException(status_code=404, detail="Subtitulos desactivados para este video.")

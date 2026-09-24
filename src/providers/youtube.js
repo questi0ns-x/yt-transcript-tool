@@ -18,6 +18,23 @@ function mapErrorMessage(status, serverMessage) {
   return "No se pudo obtener la transcripcion.";
 }
 
+const RETRY_DELAY_MS = 3000;
+
+function delay(ms, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new DOMException("Aborted", "AbortError"));
+    const timeoutId = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timeoutId);
+        reject(new DOMException("Aborted", "AbortError"));
+      },
+      { once: true }
+    );
+  });
+}
+
 export const youtubeProvider = {
   id: "youtube",
 
@@ -37,22 +54,28 @@ export const youtubeProvider = {
   },
 
   async getTranscript(video, { signal } = {}) {
-    const res = await fetch(
-      `${WORKER_URL}/transcript?video_id=${encodeURIComponent(video.videoId)}`,
-      { signal }
-    );
+    const url = `${WORKER_URL}/transcript?video_id=${encodeURIComponent(video.videoId)}`;
 
-    let json = null;
-    try {
-      json = await res.json();
-    } catch {
-      json = null;
-    }
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url, { signal });
 
-    if (!res.ok) {
+      let json = null;
+      try {
+        json = await res.json();
+      } catch {
+        json = null;
+      }
+
+      if (res.ok) return json;
+
+      // YouTube a veces bloquea momentaneamente (503): un reintento
+      // tras una breve espera suele bastar sin costarnos nada extra.
+      if (res.status === 503 && attempt === 0) {
+        await delay(RETRY_DELAY_MS, signal);
+        continue;
+      }
+
       throw new Error(mapErrorMessage(res.status, json?.error || json?.detail));
     }
-
-    return json;
   },
 };

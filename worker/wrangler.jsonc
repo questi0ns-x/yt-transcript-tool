@@ -6,5 +6,8 @@
   "compatibility_flags": ["python_workers"],
   "observability": {
     "enabled": true
-  }
+  },
+  "kv_namespaces": [
+    { "binding": "TRANSCRIPT_CACHE", "id": "c230ab9122014be88c991453ebf4e766" }
+  ]
 }
