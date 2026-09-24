@@ -1,7 +1,0 @@
-name = "yt-transcript-worker"
-main = "src/index.js"
-compatibility_date = "2024-09-23"
-
-[vars]
-ALLOWED_ORIGINS = "https://questi0ns-x.github.io,http://localhost:5173"
-TRANSCRIPT_SERVICE_URL = "http://localhost:8000"

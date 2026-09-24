@@ -1,13 +1,18 @@
-# Dependencias
+# Dependencias Node
 node_modules/
+
+# Dependencias Python
 __pycache__/
 *.py[cod]
 *.egg-info/
+python_modules/
 
 # Entornos virtuales Python
 .venv/
 venv/
 env/
+.venv-workers/
+.venv-*/
 
 # Vite / build
 dist/
@@ -18,10 +23,12 @@ dist/
 .wrangler/
 worker/.wrangler/
 
-# Variables de entorno
+# Variables de entorno y credenciales
 .env
 .env.local
 .env.*.local
+*.txt
+!requirements.txt
 
 # Herramientas locales del editor / asistentes
 .claude/

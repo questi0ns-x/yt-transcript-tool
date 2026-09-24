@@ -1,9 +1,9 @@
 import { extractYoutubeVideoId } from "../utils/youtube";
 import { ProviderError, ProviderErrorCodes } from "./errors";
 
-// Forzado a local para pruebas. En produccion, el .env o el default
-// apuntaran al Worker desplegado en Cloudflare.
-const WORKER_URL = "http://localhost:8787";
+const WORKER_URL =
+  import.meta.env.VITE_WORKER_URL ||
+  "https://yt-transcript-worker.questi0ns-x.workers.dev";
 
 function mapErrorMessage(status, serverMessage) {
   if (serverMessage) return serverMessage;
@@ -50,7 +50,7 @@ export const youtubeProvider = {
     }
 
     if (!res.ok) {
-      throw new Error(mapErrorMessage(res.status, json?.error));
+      throw new Error(mapErrorMessage(res.status, json?.error || json?.detail));
     }
 
     return json;
