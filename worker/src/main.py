@@ -91,18 +91,21 @@ async def get_cached_transcript(env, video_id: str, lang: str | None):
     """Lee del KV TRANSCRIPT_CACHE si esta configurado. Sin el binding
     (namespace no creado/no enlazado), el Worker sigue funcionando
     igual pero sin cache."""
-    kv = getattr(env, "TRANSCRIPT_CACHE", None)
+    kv = getattr(env, "TRANSCRIPT_CACHE", None) if env is not None else None
+    print(f"[cache] env={env is not None} kv={kv is not None}")
     if kv is None:
         return None
     try:
         raw = await kv.get(cache_key(video_id, lang))
+        print(f"[cache] get key={cache_key(video_id, lang)} hit={raw is not None}")
         return json.loads(raw) if raw else None
-    except Exception:
+    except Exception as e:
+        print(f"[cache] get error: {e!r}")
         return None
 
 
 async def set_cached_transcript(env, video_id: str, lang: str | None, data: dict):
-    kv = getattr(env, "TRANSCRIPT_CACHE", None)
+    kv = getattr(env, "TRANSCRIPT_CACHE", None) if env is not None else None
     if kv is None:
         return
     try:
@@ -111,8 +114,9 @@ async def set_cached_transcript(env, video_id: str, lang: str | None, data: dict
             json.dumps(data),
             expirationTtl=CACHE_TTL_SECONDS,
         )
-    except Exception:
-        pass
+        print(f"[cache] put key={cache_key(video_id, lang)} ok")
+    except Exception as e:
+        print(f"[cache] put error: {e!r}")
 
 
 def build_thumbnails(video_id: str, thumbnail_url):
