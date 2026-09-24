@@ -216,6 +216,8 @@ async def transcript(
             status_code=503,
             detail="La IP del proxy esta bloqueada por YouTube.",
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error inesperado: {e}")
 
