@@ -21,16 +21,23 @@ frecuencia.
 
 ## Desarrollo local
 
+Este es un Python Worker, asi que se gestiona con `pywrangler` (via
+`uv`), **no** con `wrangler` directamente: `wrangler dev` falla porque
+el paquete `workers` que trae Pyodide por defecto no incluye el puente
+ASGI (`workers.asgi`) que usa `src/main.py`. `pywrangler` lee
+`pyproject.toml`/`pylock.toml` y empaqueta las dependencias correctas
+(incluido `workers-py`, que si trae `asgi`) antes de arrancar.
+
 ```bash
-npm install
-npm run dev
+uv sync
+uv run pywrangler dev
 ```
 
 ## Deploy
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...
-npm run deploy
+uv run pywrangler deploy
 ```
 
 El token necesita permiso "Workers Scripts: Edit" con "Account

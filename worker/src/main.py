@@ -20,9 +20,7 @@ from youtube_transcript_api._errors import (
     IpBlocked,
 )
 import os
-import urllib.request
-from urllib.parse import quote
-import json
+import requests
 
 
 app = FastAPI()
@@ -35,13 +33,8 @@ app.add_middleware(
 )
 
 OEMBED_ENDPOINTS = {
-    "tiktok": lambda url: (
-        f"https://www.tiktok.com/oembed?url={url}"
-    ),
-    "instagram": lambda url: (
-        f"https://graph.facebook.com/v19.0/instagram_oembed"
-        f"?url={url}&access_token="
-    ),
+    "tiktok": "https://www.tiktok.com/oembed",
+    "instagram": "https://graph.facebook.com/v19.0/instagram_oembed",
 }
 
 
@@ -57,23 +50,26 @@ def get_proxy_config():
     return None
 
 
+OEMBED_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+
+
 def fetch_youtube_oembed(video_id: str):
     """Titulo, autor y miniatura via oEmbed oficial de YouTube."""
-    url = (
-        f"https://www.youtube.com/oembed"
-        f"?url=https://www.youtube.com/watch?v={video_id}&format=json"
-    )
     try:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/124.0.0.0 Safari/537.36"
+        resp = requests.get(
+            "https://www.youtube.com/oembed",
+            params={
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "format": "json",
             },
+            headers={"User-Agent": OEMBED_USER_AGENT},
+            timeout=8,
         )
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        resp.raise_for_status()
+        data = resp.json()
         return {
             "title": data.get("title"),
             "author": data.get("author_name"),
@@ -108,17 +104,23 @@ async def health():
 
 @app.get("/metadata")
 async def metadata(url: str = Query(...), platform: str = Query(...)):
-    build_url = OEMBED_ENDPOINTS.get(platform)
-    if not build_url:
+    endpoint = OEMBED_ENDPOINTS.get(platform)
+    if not endpoint:
         raise HTTPException(status_code=400, detail="Plataforma no soportada.")
 
-    oembed_url = build_url(quote(url, safe=""))
+    params = {"url": url}
+    if platform == "instagram":
+        params["access_token"] = ""
+
     try:
-        req = urllib.request.Request(
-            oembed_url, headers={"User-Agent": "Mozilla/5.0"}
+        resp = requests.get(
+            endpoint,
+            params=params,
+            headers={"User-Agent": OEMBED_USER_AGENT},
+            timeout=8,
         )
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+        resp.raise_for_status()
+        data = resp.json()
     except Exception:
         raise HTTPException(status_code=502, detail="No se pudo obtener metadata.")
 
