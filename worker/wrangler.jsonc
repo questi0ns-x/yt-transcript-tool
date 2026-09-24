@@ -7,9 +7,7 @@
   "observability": {
     "enabled": true
   },
-  // Cache opcional de transcripts (gratis, reduce peticiones repetidas
-  // a YouTube). Crea el namespace con:
-  //   npx wrangler kv namespace create TRANSCRIPT_CACHE
-  // y descomenta la linea de abajo con el "id" que te devuelva:
-  // "kv_namespaces": [{ "binding": "TRANSCRIPT_CACHE", "id": "TU_ID_AQUI" }]
+  "kv_namespaces": [
+    { "binding": "TRANSCRIPT_CACHE", "id": "c230ab9122014be88c991453ebf4e766" }
+  ]
 }
