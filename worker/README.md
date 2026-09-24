@@ -1,54 +1,43 @@
 # yt-transcript-worker
 
-Backend (Cloudflare Worker) para [yt-transcript](../README.md). Sirve
-`GET /transcript?url=...` (YouTube) y `GET /metadata?url=...&platform=...`
-(TikTok/Instagram, solo metadata publica via oEmbed oficial).
+Backend (Cloudflare Python Worker) para [yt-transcript](../README.md).
+Todo el codigo vive en `src/main.py` (FastAPI sobre `workers-py`) y usa
+directamente `youtube-transcript-api` para obtener subtitulos. Sirve:
 
-## Estado conocido: extraccion de YouTube actualmente bloqueada
+- `GET /transcript?video_id=...&lang=...` (YouTube)
+- `GET /metadata?url=...&platform=...` (TikTok/Instagram, solo metadata
+  publica via oEmbed oficial)
+- `GET /health`
 
-El metodo usado (leer `ytInitialPlayerResponse` de la pagina publica del
-video y descargar la pista de subtitulos via el endpoint publico
-`timedtext`) es el mismo que usan la mayoria de herramientas de este
-tipo: no requiere login, no llama a ninguna API privada ni falsifica
-la identidad de otra app.
+## Extraccion de YouTube
 
-A fecha de este commit, YouTube esta devolviendo respuestas vacias en
-el endpoint `timedtext` incluso con URLs firmadas validas y recien
-generadas, de forma consistente. El Worker detecta esto y devuelve un
-error claro (`503`) en vez de romperse silenciosamente.
-
-**Decision explicita de diseno:** no se ha implementado ningun
-mecanismo para evadir esta proteccion (falsificar clientes moviles
-oficiales, resolver el reto BotGuard con un navegador headless para
-obtener un PoToken, etc.). Esas tecnicas cruzan la linea de bypass de
-deteccion de bots que este proyecto evita deliberadamente, tanto por
-los Terminos de Servicio de YouTube como por ser fragiles y requerir
-mantenimiento continuo de evasion.
-
-Alternativas legitimas evaluadas y descartadas:
-
-- **YouTube Data API v3** (`captions.download`): requiere OAuth como
-  dueno del canal del video. No sirve para videos de terceros, que es
-  el caso de uso de esta herramienta.
-- **Proveedores de PoToken** (ej. `bgutil-ytdlp-pot-provider`):
-  resuelven el reto anti-bot de Google mediante automatizacion de
-  navegador. Es la misma categoria de tecnica que se descarta arriba.
-
-Si en el futuro aparece una via oficial o mantenida que no requiera
-evasion, `src/youtube.js` es el unico archivo que hay que tocar.
+El Worker usa `youtube-transcript-api`, que puede fallar con `503` si
+YouTube bloquea la IP saliente del Worker. Para mitigarlo, se puede
+configurar un proxy residencial de Webshare via las variables de
+entorno `WEBSHARE_USERNAME` / `WEBSHARE_PASSWORD` (ver
+`get_proxy_config` en `src/main.py`); sin ellas, el Worker sale
+directamente con la IP de Cloudflare, que YouTube bloquea con mas
+frecuencia.
 
 ## Desarrollo local
 
+Este es un Python Worker, asi que se gestiona con `pywrangler` (via
+`uv`), **no** con `wrangler` directamente: `wrangler dev` falla porque
+el paquete `workers` que trae Pyodide por defecto no incluye el puente
+ASGI (`workers.asgi`) que usa `src/main.py`. `pywrangler` lee
+`pyproject.toml`/`pylock.toml` y empaqueta las dependencias correctas
+(incluido `workers-py`, que si trae `asgi`) antes de arrancar.
+
 ```bash
-npm install
-npm run dev
+uv sync
+uv run pywrangler dev
 ```
 
 ## Deploy
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...
-npm run deploy
+uv run pywrangler deploy
 ```
 
 El token necesita permiso "Workers Scripts: Edit" con "Account
@@ -56,18 +45,10 @@ Resources" apuntando a tu cuenta.
 
 ## Variables de entorno
 
-- `ALLOWED_ORIGINS`: lista separada por comas de origenes permitidos
-  para CORS (ver `wrangler.toml`).
+- `WEBSHARE_USERNAME` / `WEBSHARE_PASSWORD` (opcional): credenciales
+  del proxy residencial de Webshare para reducir bloqueos de YouTube.
 
-## Rate limiting (opcional)
+Los origenes permitidos para CORS estan hardcodeados en `src/main.py`
+(`https://questi0ns-x.github.io` y `http://localhost:5173`).
 
-El rate limiting usa un namespace KV opcional. Sin el, el Worker
-funciona igual pero sin limitar requests por IP:
-
-```bash
-wrangler kv namespace create RATE_LIMIT_KV
-```
-
-Y descomenta el binding correspondiente en `wrangler.toml` con el ID
-que te devuelva el comando (requiere permiso "Workers KV Storage:
-Edit" en el token).
+No hay rate limiting implementado actualmente en el Worker Python.
